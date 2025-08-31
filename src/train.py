@@ -6,7 +6,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from dataset import HairSegDataset, get_default_transforms
 from model import get_model
-from utils import mask_accuracy  # optional helper
+from utils import mask_accuracy
+from utils import mask_iou
 import warnings
 warnings.filterwarnings("ignore", message="NVIDIA GeForce RTX 5070 with CUDA capability")
 # -------------------------
@@ -75,9 +76,8 @@ def train():
                 optimizer.step()
 
             epoch_loss += loss.item()
-            # Optional accuracy function
-            if 'mask_accuracy' in globals():
-                acc_total += mask_accuracy(outputs, masks)
+            if 'mask_iou' in globals():
+                acc_total += mask_iou(outputs, masks)
 
         avg_loss = epoch_loss / len(train_loader)
         avg_acc = acc_total / len(train_loader) if acc_total else 0
