@@ -1,4 +1,3 @@
-# train.py
 import os
 import torch
 import torch.nn as nn
@@ -10,6 +9,37 @@ from utils import mask_accuracy
 from utils import mask_iou
 import warnings
 warnings.filterwarnings("ignore", message="NVIDIA GeForce RTX 5070 with CUDA capability")
+
+
+# ------------------------
+# Custom Dice / IoU Loss
+# ------------------------
+class DiceLoss(nn.Module):
+    def __init__(self, smooth=1e-6):
+        super(DiceLoss, self).__init__()
+        self.smooth = smooth
+
+    def forward(self, inputs, targets):
+        """
+        inputs: [B, C, H, W] (logits from model)
+        targets: [B, H, W] (ground truth mask)
+        """
+        # Convert logits -> probabilities
+        inputs = torch.softmax(inputs, dim=1)
+        
+        # One-hot encode ground truth
+        num_classes = inputs.shape[1]
+        targets_onehot = torch.nn.functional.one_hot(targets, num_classes).permute(0,3,1,2).float()
+        
+        # Dice coefficient per class
+        dims = (0,2,3)
+        intersection = torch.sum(inputs * targets_onehot, dims)
+        cardinality = torch.sum(inputs + targets_onehot, dims)
+        dice_score = (2. * intersection + self.smooth) / (cardinality + self.smooth)
+        
+        # Dice loss = 1 - mean dice
+        return 1 - dice_score.mean()
+
 # -------------------------
 # Settings
 # -------------------------
@@ -45,7 +75,17 @@ def train():
 
     # Model, Loss, Optimizer
     model = get_model(num_classes=3, encoder_name="resnet34", pretrained=True).to(device)
-    criterion = nn.CrossEntropyLoss()
+    ce_loss = nn.CrossEntropyLoss()
+    dice_loss = DiceLoss()
+
+    def combined_loss(outputs, targets, alpha=0.5, beta=0.5):
+        """
+        Combine CrossEntropy and Dice loss
+        alpha: weight for CE
+        beta: weight for Dice
+        """
+        return alpha * ce_loss(outputs, targets) + beta * dice_loss(outputs, targets)
+
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Optional: mixed precision
@@ -65,13 +105,13 @@ def train():
             if scaler:
                 with torch.cuda.amp.autocast():
                     outputs = model(images)
-                    loss = criterion(outputs, masks)
+                    loss = combined_loss(outputs, masks, alpha=0.5, beta=0.5)
                 scaler.scale(loss).backward()
                 scaler.step(optimizer)
                 scaler.update()
             else:
                 outputs = model(images)
-                loss = criterion(outputs, masks)
+                loss = combined_loss(outputs, masks, alpha=0.5, beta=0.5)
                 loss.backward()
                 optimizer.step()
 
