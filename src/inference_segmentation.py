@@ -12,7 +12,7 @@ from PIL import Image
 # -------------------------
 MODEL_PATH = "../checkpoints/hair_seg_model.pth"
 NUM_CLASSES = 3
-DEVICE = torch.device("cpu")  # change to "cuda" if GPU available
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # Map class indices to BGR colors (OpenCV uses BGR)
 CLASS_COLORS = {
