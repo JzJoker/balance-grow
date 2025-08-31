@@ -11,35 +11,40 @@ def mask_accuracy(preds, masks):
     correct = (preds_labels == masks).float()
     return correct.mean().item()
 
-def mask_iou(preds, masks, num_classes=3, eps=1e-6):
+def mask_iou(outputs, targets, num_classes=3):
     """
-    Compute mean IoU (Intersection over Union) across classes.
-    
-    preds: model output logits [B, C, H, W]
-    masks: ground truth [B, H, W]
-    num_classes: number of classes (default=3: background, skin, hair)
-    eps: small constant to avoid division by zero
-    
-    Returns:
-        mean IoU over all classes (float)
+    outputs: [B, C, H, W] logits
+    targets: [B, H, W] ground truth
+    Returns mean IoU over batch
     """
-    preds_labels = torch.argmax(preds, dim=1)  # [B, H, W]
+    with torch.no_grad():
+        preds = torch.argmax(outputs, dim=1)  # [B,H,W]
+        iou_per_class = []
 
-    ious = []
-    for c in range(num_classes):
-        pred_c = (preds_labels == c).float()
-        mask_c = (masks == c).float()
+        for cls in range(num_classes):
+            intersection = ((preds == cls) & (targets == cls)).sum(dim=(1,2)).float()
+            union = ((preds == cls) | (targets == cls)).sum(dim=(1,2)).float()
+            iou_cls = (intersection / (union + 1e-6))  # avoid division by 0
+            iou_per_class.append(iou_cls)
 
-        intersection = (pred_c * mask_c).sum()
-        union = pred_c.sum() + mask_c.sum() - intersection
+        iou_per_class = torch.stack(iou_per_class, dim=1)  # [B, C]
+        mean_iou = iou_per_class.mean(dim=1)  # mean over classes per image
+        return mean_iou.mean().item()  # mean over batch
 
-        if union > 0:
-            iou = (intersection + eps) / (union + eps)
-            ious.append(iou.item())
+def mask_dice(outputs, targets, num_classes=3, smooth=1e-6):
+    """
+    outputs: [B, C, H, W] logits
+    targets: [B, H, W] ground truth
+    Returns mean Dice score over batch
+    """
+    with torch.no_grad():
+        probs = torch.softmax(outputs, dim=1)
+        targets_onehot = torch.nn.functional.one_hot(targets, num_classes).permute(0,3,1,2).float()
 
-    if len(ious) == 0:
-        return 0.0
-    return sum(ious) / len(ious) 
+        intersection = (probs * targets_onehot).sum(dim=(2,3))  # [B,C]
+        cardinality = (probs + targets_onehot).sum(dim=(2,3))    # [B,C]
+        dice = (2 * intersection + smooth) / (cardinality + smooth)  # [B,C]
+        return dice.mean(dim=1).mean().item()  # mean over classes then batch
 
 def one_hot_encode(mask, num_classes=3):
     """
