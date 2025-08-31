@@ -1,11 +1,11 @@
-# inference_segmentation.py
+# inference_segmentation_matplotlib.py
 import torch
 import cv2
 import numpy as np
 import argparse
 from model import get_model
 from dataset import get_default_transforms
-from PIL import Image
+import matplotlib.pyplot as plt
 
 # -------------------------
 # Constants
@@ -35,21 +35,15 @@ def load_model():
 # Preprocess image using training transforms
 # -------------------------
 def preprocess_image(img_path):
-    import cv2
     img = cv2.imread(img_path)
     if img is None:
         raise FileNotFoundError(f"Image not found: {img_path}")
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)  # Albumentations expects RGB
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    transform = get_default_transforms()  # Albumentations transform
+    transform = get_default_transforms()
     augmented = transform(image=img)
-    img_tensor = augmented['image']  # this is already a torch.Tensor if you used ToTensorV2
-
-    # Ensure float and add batch dimension
-    img_tensor = img_tensor.float().unsqueeze(0).to(DEVICE)
-
-    return img_tensor, img  # original image as np.array for overlay
-
+    img_tensor = augmented['image'].float().unsqueeze(0).to(DEVICE)
+    return img_tensor, img  # original image for overlay
 
 # -------------------------
 # Postprocess mask
@@ -68,8 +62,8 @@ def predict(model, img_tensor, orig_img_shape):
     with torch.no_grad():
         output = model(img_tensor)
         pred_mask = torch.argmax(output, dim=1).squeeze(0).cpu().numpy()
-        # Resize mask to original image size
-        pred_mask_resized = cv2.resize(pred_mask, (orig_img_shape.shape[1], orig_img_shape.shape[0]), interpolation=cv2.INTER_NEAREST)
+        pred_mask_resized = cv2.resize(pred_mask, (orig_img_shape.shape[1], orig_img_shape.shape[0]),
+                                       interpolation=cv2.INTER_NEAREST)
         color_mask = mask_to_color(pred_mask_resized)
     return color_mask
 
@@ -80,24 +74,24 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--img", type=str, required=True, help="Path to input image")
     parser.add_argument("--out", type=str, default="output.png", help="Path to save output overlay")
+    parser.add_argument("--alpha", type=float, default=0.5, help="Overlay transparency (0.0–1.0)")
     args = parser.parse_args()
 
     model = load_model()
     img_tensor, orig_img = preprocess_image(args.img)
     color_mask = predict(model, img_tensor, orig_img)
 
-    # Debug prints
-    print("Predicted mask shape:", color_mask.shape)
-    print("Unique colors in mask:", np.unique(color_mask.reshape(-1, 3), axis=0))
+    # Create mask boolean
     mask_bool = np.any(color_mask != [0, 0, 0], axis=2)
-    print("Number of pixels to overlay:", np.sum(mask_bool))
 
-    if np.sum(mask_bool) == 0:
-        print("Warning: No hair or skin pixels detected. Check your model predictions!")
+    # Semi-transparent overlay
+    alpha = args.alpha
+    overlay_img = orig_img.copy()
+    overlay_img[mask_bool] = cv2.addWeighted(orig_img[mask_bool], 1 - alpha, color_mask[mask_bool], alpha, 0)
 
-    # Hard overlay
-    hard_overlay = orig_img.copy()
-    hard_overlay[mask_bool] = color_mask[mask_bool]
-
-    cv2.imwrite(args.out, hard_overlay)
-    print(f"Saved hard overlay segmentation result to {args.out}")
+    # Display overlay with Matplotlib
+    plt.figure(figsize=(8, 8))
+    plt.imshow(overlay_img)
+    plt.axis('off')
+    plt.title("Segmentation Overlay")
+    plt.show()
