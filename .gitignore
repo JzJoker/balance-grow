@@ -212,3 +212,8 @@ processed_masks/
 *.h5
 *.pt
 *.pth
+
+# Ignore processed data
+data/
+outputs/
+.ipynb_checkpoints/
