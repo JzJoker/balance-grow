@@ -5,11 +5,8 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from dataset import HairSegDataset, get_default_transforms
 from model import get_model
-from utils import mask_accuracy
+from utils import mask_accuracy, mask_dice
 from utils import mask_iou
-import warnings
-warnings.filterwarnings("ignore", message="NVIDIA GeForce RTX 5070 with CUDA capability")
-
 
 # ------------------------
 # Custom Dice / IoU Loss
@@ -45,13 +42,13 @@ class DiceLoss(nn.Module):
 # -------------------------
 images_root = "data/images"
 masks_root = "data/masks"
-batch_size = 4
+batch_size = 10
 num_epochs = 10
 learning_rate = 1e-4
 num_workers = 2  # keep low on Windows to avoid issues
 
-# Force CPU usage
-device = torch.device("cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device:", device)
 
 # -------------------------
 # Training function
@@ -94,7 +91,8 @@ def train():
     for epoch in range(num_epochs):
         model.train()
         epoch_loss = 0.0
-        acc_total = 0.0
+        iou_total = 0.0
+        dice_total = 0.0
 
         for images, masks in train_loader:
             images = images.to(device, dtype=torch.float)
@@ -116,12 +114,17 @@ def train():
                 optimizer.step()
 
             epoch_loss += loss.item()
-            if 'mask_iou' in globals():
-                acc_total += mask_iou(outputs, masks)
+
+            with torch.no_grad():
+                if 'mask_iou' in globals():
+                    iou_total += mask_iou(outputs, masks)
+                if 'mask_dice' in globals():
+                    dice_total += mask_dice(outputs, masks)
 
         avg_loss = epoch_loss / len(train_loader)
-        avg_acc = acc_total / len(train_loader) if acc_total else 0
-        print(f"Epoch {epoch+1}/{num_epochs} - Loss: {avg_loss:.4f} - Acc: {avg_acc:.4f}")
+        avg_iou = iou_total / len(train_loader) if iou_total else 0
+        avg_dice = dice_total / len(train_loader) if dice_total else 0
+        print(f"Epoch {epoch+1}/{num_epochs} - Loss: {avg_loss:.4f} - Dice: {avg_dice:.4f} - IoU: {avg_iou:.4f}")
 
     # Save model
     os.makedirs("checkpoints", exist_ok=True)
