@@ -1,9 +1,11 @@
 # inference_segmentation_matplotlib.py
 import torch
+import sys,os
 import cv2
 import numpy as np
 import argparse
 from model import get_model
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from dataset import get_default_transforms
 import matplotlib.pyplot as plt
 import os
@@ -12,7 +14,7 @@ import os
 # -------------------------
 # Constants
 # -------------------------
-MODEL_PATH = "../checkpoints/hair_seg_model.pth"
+MODEL_PATH = "../../checkpoints/hair_seg_model.pth"
 NUM_CLASSES = 3
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

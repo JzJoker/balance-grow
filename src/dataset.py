@@ -87,7 +87,7 @@ def get_default_transforms():
 
 # Quick test
 if __name__ == "__main__":
-    dataset = HairSegDataset("data/images", "data/masks")
+    dataset = HairSegDataset("../data/images", "../data/masks", transform=get_default_transforms())
     print(f"Dataset length: {len(dataset)}")
     img, mask = dataset[0]
     print(f"Image shape: {img.shape}, Mask shape: {mask.shape}, Mask unique values: {np.unique(mask.numpy())}")

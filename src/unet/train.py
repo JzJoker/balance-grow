@@ -1,8 +1,9 @@
-import os
+import sys,os
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from dataset import HairSegDataset, get_default_transforms
 from model import get_model
 from utils import mask_accuracy, mask_dice
@@ -40,8 +41,8 @@ class DiceLoss(nn.Module):
 # -------------------------
 # Settings
 # -------------------------
-images_root = "data/images"
-masks_root = "data/masks"
+images_root = "../../data/images"
+masks_root = "../../data/masks"
 batch_size = 10
 num_epochs = 10
 learning_rate = 1e-4
