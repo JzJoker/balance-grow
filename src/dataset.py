@@ -23,7 +23,7 @@ class HairSegDataset(Dataset):
         self.images.sort()  # ensures consistent ordering
 
         # Pre-cache mask paths for faster lookup
-        self.image_to_masks = {}  # {image_number: {"hair": path, "skin": path}}
+        self.image_to_masks = {}  # {image_number: {"hair": path, "skin": path}
         for folder in os.listdir(masks_root):
             folder_path = os.path.join(masks_root, folder)
             if not os.path.isdir(folder_path):
@@ -54,6 +54,8 @@ class HairSegDataset(Dataset):
         mask = np.zeros((h, w), dtype=np.uint8)
         mask_paths = self.image_to_masks.get(img_number, {})
 
+        
+
         # Hair = 2
         hair_path = mask_paths.get("hair")
         if hair_path and os.path.exists(hair_path):
@@ -75,18 +77,17 @@ class HairSegDataset(Dataset):
             mask = augmented['mask']
 
         return image, mask
-
+    
 # Example Albumentations transforms
 def get_default_transforms():
     return Compose([
-        HorizontalFlip(p=0.5),
         RandomBrightnessContrast(p=0.2),
         ToTensorV2()
     ])
 
 # Quick test
 if __name__ == "__main__":
-    dataset = HairSegDataset("data/images", "data/masks", transform=get_default_transforms())
+    dataset = HairSegDataset("data/images", "data/masks")
     print(f"Dataset length: {len(dataset)}")
     img, mask = dataset[0]
     print(f"Image shape: {img.shape}, Mask shape: {mask.shape}, Mask unique values: {np.unique(mask.numpy())}")

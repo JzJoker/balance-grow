@@ -60,7 +60,7 @@ def train():
         masks_root, 
         transform=get_default_transforms()
     )    
-    train_dataset.images = train_dataset.images[:500]
+    train_dataset.images = train_dataset.images
 
     train_loader = DataLoader(
         train_dataset, 

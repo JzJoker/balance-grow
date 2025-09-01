@@ -6,6 +6,8 @@ import argparse
 from model import get_model
 from dataset import get_default_transforms
 import matplotlib.pyplot as plt
+import os
+
 
 # -------------------------
 # Constants
@@ -17,8 +19,8 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Map class indices to BGR colors (OpenCV uses BGR)
 CLASS_COLORS = {
     0: [0, 0, 0],       # Background = black
-    1: [0, 0, 255],     # Hair = red
-    2: [0, 255, 0],     # Skin = green
+    1: [0, 255, 0],     # Skin = green
+    2: [0, 0, 255],     # Hair = red
 }
 
 # -------------------------
@@ -71,8 +73,10 @@ def predict(model, img_tensor, orig_img_shape):
 # Main
 # -------------------------
 if __name__ == "__main__":
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
     parser = argparse.ArgumentParser()
     parser.add_argument("--img", type=str, required=True, help="Path to input image")
+    parser.add_argument("--flip", type=bool, help="Bool flip image horizontally")
     parser.add_argument("--out", type=str, default="output.png", help="Path to save output overlay")
     parser.add_argument("--alpha", type=float, default=0.5, help="Overlay transparency (0.0–1.0)")
     args = parser.parse_args()
@@ -86,6 +90,11 @@ if __name__ == "__main__":
 
     # Semi-transparent overlay
     alpha = args.alpha
+
+    # Flip horizontally (over y-axis)
+    if args.flip:
+        orig_img = np.flip(orig_img, axis=1)
+
     overlay_img = orig_img.copy()
     overlay_img[mask_bool] = cv2.addWeighted(orig_img[mask_bool], 1 - alpha, color_mask[mask_bool], alpha, 0)
 
@@ -93,5 +102,5 @@ if __name__ == "__main__":
     plt.figure(figsize=(8, 8))
     plt.imshow(overlay_img)
     plt.axis('off')
-    plt.title("Segmentation Overlay")
+    plt.title("Segmentation Overlay (Flipped)")
     plt.show()
