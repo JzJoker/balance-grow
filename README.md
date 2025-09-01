@@ -50,6 +50,7 @@ cd source
 python inference_segmentation.py --img ..\data\test\no_hand+balding+wet.png
 ```
 Example Output:
+
 ![Overlay Demo](screenshots/overlay_demo.png)
 
 ### Run Real-Time Mapping Demo
