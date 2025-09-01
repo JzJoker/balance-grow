@@ -44,14 +44,35 @@ pip install -r requirements.txt
 
 ### Run Model Demo
 
-```bash
-cd source
+This will run hair segmentation on a **single input image** and display a mask overlay.
 
+#### Command:
+
+```bash
+cd src
 python inference_segmentation.py --img ..\data\test\no_hand+balding+wet.png
 ```
-Example Output:
+
+#### Parameters:
+
+| Parameter | Type    | Default      | Description                                                                |
+| --------- | ------- | ------------ | -------------------------------------------------------------------------- |
+| `--img`   | `str`   | **required** | Path to the input image.                                                   |
+| `--flip`  | `bool`  | `False`      | Optionally flip the input image horizontally.                              |
+| `--out`   | `str`   | `output.png` | Path to save the output overlay image.                                     |
+| `--alpha` | `float` | `0.5`        | Transparency of the overlay (0.0 = fully transparent, 1.0 = fully opaque). |
+
+
+**Example Output:**
 
 ![Overlay Demo](screenshots/overlay_demo.png)
+
+**Notes:**
+
+* The overlay shows **hair in red** and **skin in green**.
+* High-confidence pixels are more opaque; lower-confidence areas appear faint.
+* Works with both **your trained U-Net model** or **MediaPipe hair segmentation**, depending on what’s loaded in the repo.
+* Useful for **testing single images before moving to real-time webcam demos**.
 
 ### Run Real-Time Mapping Demo
 ```bash
@@ -64,10 +85,13 @@ python main.py
 
 ### Parameters
 
-* `--alpha` : Overlay transparency for hair mask (default 0.5).
-* `--threshold` : Confidence threshold for hair segmentation mask (default 0.7).
-
----
+| Parameter     | Description                                        | Default |
+|---------------|----------------------------------------------------|---------|
+| `--img`       | Path to input image                                | *Required* |
+| `--flip`      | Bool to flip image horizontally                   | False   |
+| `--out`       | Path to save output overlay                        | `output.png` |
+| `--alpha`     | Overlay transparency for hair mask                | 0.5     |
+| `--threshold` | Confidence threshold for hair segmentation mask   | 0.7     |
 
 
 ---
