@@ -5,9 +5,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from dataset import HairSegDataset, get_default_transforms
-from model import get_model
-from utils import mask_accuracy, mask_dice
-from utils import mask_iou
+from src.unet.model import get_model
+from src.unet.utils import mask_accuracy, mask_dice
+from src.unet.utils import mask_iou
 
 # ------------------------
 # Custom Dice / IoU Loss
