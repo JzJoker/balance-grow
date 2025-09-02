@@ -122,9 +122,11 @@ def main():
     model = load_model()
     if DEVICE.type == "cuda":
         try:
-            model.half()  # optional speed-up on GPU if your model supports fp16
+            img_tensor = out["image"].unsqueeze(0).to(DEVICE)
+            if next(model.parameters()).dtype == torch.float16:
+                img_tensor = img_tensor.half()
         except Exception:
-            pass
+                pass
 
     cap = cv2.VideoCapture(args.cam)
     if not cap.isOpened():
