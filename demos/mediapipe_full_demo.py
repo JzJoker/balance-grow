@@ -60,6 +60,39 @@ def select_eyebrow_points(landmarks, w, h):
     right = [pts[i] for i in RIGHT_EYEBROW_IDX]
     return left, right
 
+# Landmarks for orientation check
+NOSE_IDX = 1
+LEFT_CHEEK_IDX = 234
+RIGHT_CHEEK_IDX = 454
+
+def get_head_orientation(landmarks, w, h, threshold=0.03):
+    """
+    Returns one of: 'straight', 'left', 'right'
+    based on relative cheek-to-nose horizontal distances.
+    """
+    nose = landmarks[NOSE_IDX]
+    left_cheek = landmarks[LEFT_CHEEK_IDX]
+    right_cheek = landmarks[RIGHT_CHEEK_IDX]
+
+    # Normalized x positions
+    nose_x = nose.x
+    left_x = left_cheek.x
+    right_x = right_cheek.x
+
+    # Distances from nose
+    dist_left = abs(nose_x - left_x)
+    dist_right = abs(right_x - nose_x)
+
+    # Compare
+    diff = dist_left - dist_right
+    if diff > threshold:
+        return "right"   # user turned right
+    elif diff < -threshold:
+        return "left"    # user turned left
+    else:
+        return "straight"
+
+
 
 # -------------------------
 # Ray casting (vertical up)
@@ -118,7 +151,8 @@ def main():
             ok, frame = cap.read()
             if not ok:
                 break
-
+            
+            frame = cv2.flip(frame, 1)
             h0, w0 = frame.shape[:2]
             if w0 > args.max_width:
                 scale = args.max_width / w0
@@ -145,6 +179,16 @@ def main():
             if res.multi_face_landmarks:
                 landmarks = res.multi_face_landmarks[0].landmark
                 left_pts, right_pts = select_eyebrow_points(landmarks, W, H)
+                orientation = get_head_orientation(landmarks, W, H)
+                if orientation == "left":
+                    cv2.putText(frame, "Turn your head slightly right", (50, 80),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
+                elif orientation == "right":
+                    cv2.putText(frame, "Turn your head slightly left", (50, 80),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2, cv2.LINE_AA)
+                else:
+                    cv2.putText(frame, "Good: look straight", (50, 80),
+                                cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 2, cv2.LINE_AA)
                 draw_pts = left_pts[::args.draw_step] + right_pts[::args.draw_step]
 
                 for (x0, y0) in draw_pts:
