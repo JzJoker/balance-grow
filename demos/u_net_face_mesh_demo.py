@@ -14,7 +14,7 @@ from src.dataset import get_default_transforms
 # -------------------------
 # Constants / Config
 # -------------------------
-MODEL_PATH = "../checkpoints/hair_seg_model.pth"
+MODEL_PATH = "../ml/checkpoints/hair_seg_model.pth"
 NUM_CLASSES = 3
 HAIR_CLASS = 2
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

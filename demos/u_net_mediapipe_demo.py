@@ -21,7 +21,7 @@ HAIR_CLASS = 1  # adjust if your dataset uses different label
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.unet.model import get_model
 model = get_model(num_classes=3)
-model.load_state_dict(torch.load("../checkpoints/hair_seg_model.pth", map_location=DEVICE))
+model.load_state_dict(torch.load("../ml/checkpoints/hair_seg_model.pth", map_location=DEVICE))
 model.eval().to(DEVICE)
 
 # Preprocessing
