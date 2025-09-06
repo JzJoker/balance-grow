@@ -219,3 +219,5 @@ outputs/
 .ipynb_checkpoints/
 src/unet/Image_250831_230319.jpeg
 src/unet/IMG_6657.jpeg
+
+.DS_Store
