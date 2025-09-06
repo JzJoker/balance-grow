@@ -9,7 +9,7 @@ import mediapipe as mp
 # Constants / Config
 # -------------------------
 MODEL_PATH = "hair_segmenter.tflite"
-HAIR_THRESHOLD = 0.5  # probability cutoff for hair mask
+HAIR_THRESHOLD = 0.5  # probability cutoff for hair mask    
 
 # MediaPipe Face Mesh
 mp_face_mesh = mp.solutions.face_mesh

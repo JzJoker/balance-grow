@@ -1,0 +1,28 @@
+# IntelliJ/Android Studio specific
+*.iml
+.idea/
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+
+# Build files
+/build/
+**/build/
+.gradle/
+.cxx/
+.externalNativeBuild/
+
+# Local configuration
+local.properties
+
+# macOS
+.DS_Store
+
+# Device logs
+captures/
+
+# Other
+*.log
